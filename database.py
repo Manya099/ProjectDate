@@ -15,8 +15,8 @@ def is_user_exists(user_id):
     """, user_id)
 
     result = cursor.fetchone()[0]
-
-    if result == '0':
+    
+    if result == 0:
         return False
     else:
         return True
