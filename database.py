@@ -5,7 +5,7 @@ cursor = connection.cursor()
 
 
 # Проверяет, есть ли запись с таким id в базе данных
-def is_user_exist(user_id):
+def is_user_exists(user_id):
     cursor.execute("""
         SELECT EXISTS(
             SELECT id 
@@ -23,13 +23,13 @@ def is_user_exist(user_id):
 
 
 # Записывает пользователя в базу данных
-def create_user(user_id, name, sex, partner_sex):
+def create_user(user_id, name, age, sex, partner_sex):
     try:
-        if not is_user_exist(user_id):
+        if not is_user_exists(user_id):
             cursor.execute("""
                 INSERT INTO users 
-                VALUES (?, ?, ?, ?)
-            """, (user_id, name, sex, partner_sex))
+                VALUES (?, ?, ?, ?, ?)
+            """, (user_id, name, age, sex, partner_sex))
         else:
             print('Ошибка регистрации пользователя: пользователь с данным id уже зарегистрирован')
     except sqlite3.DatabaseError as error:
@@ -41,7 +41,7 @@ def create_user(user_id, name, sex, partner_sex):
 # Обновляет данные пользователя по их имени
 def update_userdata(user_id, data_name, data):
     try:
-        if is_user_exist(user_id):
+        if is_user_exists(user_id):
             cursor.execute("""
                 UPDATE users 
                 SET {} = ? 
@@ -58,7 +58,7 @@ def update_userdata(user_id, data_name, data):
 # Получает данные пользовател по их имени
 def read_userdata(user_id, data_name):
     try:
-        if is_user_exist(user_id):
+        if is_user_exists(user_id):
             cursor.execute("""
                 SELECT {} 
                 FROM users 
@@ -75,7 +75,7 @@ def read_userdata(user_id, data_name):
 # Удаляет пользователя из базы данных
 def delete_user(user_id):
     try:
-        if is_user_exist(user_id):
+        if is_user_exists(user_id):
             cursor.execute("""
                 DELETE 
                 FROM users 
