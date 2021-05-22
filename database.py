@@ -46,7 +46,7 @@ def create_user(user_id, name, age, sex, partner_sex):
         else:
             connection.close()
     else:
-        raise UserIDError('User with id ' + str(user_id + ' alredy exists'))
+        raise UserIDError('User with id ' + str(user_id) + ' alredy exists')
         connection.close
 
 
@@ -69,7 +69,7 @@ def update_userdata(user_id, data_name, data):
         else:
             connection.close()
     else:
-        raise UserIDError('User with id ' + str(user_id + ' not exists'))
+        raise UserIDError('User with id ' + str(user_id) + ' not exists')
         connection.close()
 
 
@@ -92,7 +92,7 @@ def read_userdata(user_id, data_name):
         else:
             connection.close()
     else:
-        raise UserIDError('User with id ' + str(user_id + ' not exists'))
+        raise UserIDError('User with id ' + str(user_id) + ' not exists')
         connection.close()
 
 
@@ -126,7 +126,7 @@ def delete_user(user_id):
         else:
             connection.close()
     else:
-        raise UserIDError('User with id ' + str(user_id + ' not exists'))
+        raise UserIDError('User with id ' + str(user_id) + ' not exists')
         connection.close()
 
 
@@ -154,7 +154,6 @@ def get_partner(user_id):
                 """, (str(partner_sex), str(sex)))
 
             partners = cursor.fetchall()
-
             partner_id = partners[random.randint(0, len(partners) - 1)][0]
 
             return partner_id
@@ -163,7 +162,6 @@ def get_partner(user_id):
         else:
             connection.close()
     else:
-        raise UserIDError('User with id ' + str(user_id + ' not exists'))
+        raise UserIDError('User with id ' + str(user_id) + ' not exists')
         connection.close
 
-print(get_partner(599415618))
