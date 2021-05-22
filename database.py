@@ -1,4 +1,10 @@
-import sqlite3
+import sqlite3, random
+
+class UserIDError(Exception):
+    pass
+
+class DatabaseError(Exception):
+    pass
 
 # Проверяет, есть ли запись с таким id в базе данных
 def is_user_exists(user_id):
@@ -11,7 +17,7 @@ def is_user_exists(user_id):
             FROM users 
             WHERE id = ?
         )
-    """, (user_id,))
+    """, (str(user_id),))
 
     result = cursor.fetchone()[0]
     connection.close()
@@ -27,20 +33,21 @@ def create_user(user_id, name, age, sex, partner_sex):
     connection = sqlite3.connect("database.sqlite")
     cursor = connection.cursor()
 
-    try:
-        if not is_user_exists(user_id):
+    if not is_user_exists(user_id):
+        try:
             cursor.execute("""
                 INSERT INTO users 
                 VALUES (?, ?, ?, ?, ?)
-            """, (user_id, name, age, sex, partner_sex))
+            """, (str(user_id), str(name), str(age), str(sex), str(partner_sex)))
 
             connection.commit()
+        except Exception as error:
+            raise DatabaseError(str(error))
         else:
-            print('Ошибка регистрации пользователя: пользователь с данным id уже зарегистрирован')
-    except sqlite3.DatabaseError as error:
-        print("User creating error: " + str(error))
+            connection.close()
     else:
-        connection.close()
+        raise UserIDError('User with id ' + str(user_id + ' alredy exists'))
+        connection.close
 
 
 # Обновляет данные пользователя по их имени
@@ -48,20 +55,21 @@ def update_userdata(user_id, data_name, data):
     connection = sqlite3.connect("database.sqlite")
     cursor = connection.cursor()
 
-    try:
-        if is_user_exists(user_id):
+    if is_user_exists(user_id):
+        try:
             cursor.execute("""
                 UPDATE users 
-                SET {} = ? 
+                SET {} = ?                 
                 WHERE id = ?
-            """.format(data_name), (data, user_id))
+            """.format(str(data_name)), (str(data), str(user_id)))
 
             connection.commit()
+        except Exception as error:
+            raise DatabaseError(str(error))
         else:
-            print('Ошибка обновления данных: пользователь с данным id не зарегистрирован')
-    except sqlite3.DatabaseError as error:
-        print("Updating error: " + error)
+            connection.close()
     else:
+        raise UserIDError('User with id ' + str(user_id + ' not exists'))
         connection.close()
 
 
@@ -70,21 +78,33 @@ def read_userdata(user_id, data_name):
     connection = sqlite3.connect("database.sqlite")
     cursor = connection.cursor()
 
-    try:
-        if is_user_exists(user_id):
+    if is_user_exists(user_id):
+        try:
             cursor.execute("""
                 SELECT {} 
                 FROM users 
                 WHERE id = ?
-            """.format(data_name), user_id)
+            """.format(str(data_name)), (str(user_id),))
 
             return cursor.fetchone()[0]
+        except Exception as error:
+            raise DatabaseError(str(error))
         else:
-            print('Ошибка чтения данных: пользователь с данным id не зарегистрирован')
-    except sqlite3.DatabaseError as error:
-        print("Reading error: " + error)
+            connection.close()
     else:
+        raise UserIDError('User with id ' + str(user_id + ' not exists'))
         connection.close()
+
+
+#Загружает фотографию пользователя в базу данных
+def get_image(user_id):
+    pass
+
+
+#Получает фотографию пользователя из базы данных
+def set_image(user_id, image):
+    image_data = bytearray(image.read())
+    update_userdata(user_id, 'image', image_data)
 
 
 # Удаляет пользователя из базы данных
@@ -92,20 +112,55 @@ def delete_user(user_id):
     connection = sqlite3.connect("database.sqlite")
     cursor = connection.cursor()
 
-    try:
-        if is_user_exists(user_id):
+    if is_user_exists(user_id):
+        try:
             cursor.execute("""
                 DELETE 
                 FROM users 
                 WHERE id = ?
-            """, user_id)
+            """, (str(user_id),))
 
             connection.commit()
+        except Exception as error:
+            raise DatabaseError(str(error))
         else:
-            print('Ошибка удаления пользователя: пользователь с данным id не зарегистрирован')
-    except sqlite3.DatabaseError as error:
-        print("Deleting error: " + error)
+            connection.close()
     else:
+        raise UserIDError('User with id ' + str(user_id + ' not exists'))
         connection.close()
 
 
+# Возвращает id пользователя, подходящего под критерии отбора пользователя с id user_id
+def get_partner(user_id):
+    connection = sqlite3.connect("database.sqlite")
+    cursor = connection.cursor()
+
+    sex = read_userdata(user_id, 'sex')
+    partner_sex = read_userdata(user_id, 'partner_sex')
+
+    if is_user_exists(user_id):
+        try:
+            if partner_sex == 'any':
+                cursor.execute("""
+                    SELECT id
+                    FROM users
+                    WHERE partner_sex = ? OR partner_sex = "any
+                """, (str(sex),))
+            else:
+                cursor.execute("""
+                    SELECT id
+                    FROM users
+                    WHERE sex = ? AND (partner_sex = ? OR partner_sex = "any)
+                """, (str(partner_sex), str(sex)))
+
+            partners = cursor.fetchall()
+            partner_id = partners[random.randint(len(partners))]
+
+            return partner_id
+        except Exception as error:
+            raise DatabaseError(str(error))
+        else:
+            connection.close()
+    else:
+        raise UserIDError('User with id ' + str(user_id + ' not exists'))
+        connection.close
