@@ -14,7 +14,7 @@ bot.delete_webhook()
 @bot.message_handler(commands=['start'])
 def start_message(message):
     keyboard = telebot.types.ReplyKeyboardMarkup(True)
-    keyboard.row('Зарегестрироваться')
+    keyboard.row('Зарегистрироваться','Я уже зарегистрирован')
     bot.send_message(message.chat.id, 'Привет!\n Это бот для знакомств. Здесь вы сможете найти свою вторую половинку!', reply_markup=keyboard)
 
 @bot.message_handler(commands=['menu'])
@@ -78,32 +78,62 @@ def partner_sex(message):
     else:
         partner_sex = 'any'
     if (k == 0):
-        bot.send_message(message.chat.id, 'Регистрация прошла успешно', reply_markup=types.ReplyKeyboardRemove())
         try:
             database.create_user(message.from_user.id, name, age, sex, partner_sex)
+            bot.send_message(message.chat.id, 'Регистрация прошла успешно', reply_markup=types.ReplyKeyboardRemove())
+            main_menu(message)
         except:
-            pass
-        #bot.register_next_step_handler(message, main_menu)
-        main_menu(message)
+            bot.send_message(message.chat.id, 'Произошла какая-то ошибка\nПриносим свои извинения')
     else:
         bot.send_message(message.chat.id, 'Данные успешно обновлены!', reply_markup=types.ReplyKeyboardRemove())
         database.update_userdata(message.from_user.id, name, age, sex, partner_sex)
 
+def get_partner1(message):
+    partner_anketa = database.get_partner(message.from_user.id)
+    database.read_userdata(message.from_user.id, partner_anketa)
+    keyboard = telebot.types.ReplyKeyboardMarkup(True)
+    keyboard.row('Продолжить общение','Дальше', 'Стоп')
+    bot.send_message(message.from_user.id, "",reply_markup=keyboard)
+
+
 
 @bot.message_handler(content_types=['text'])
 def send_text(message):
-    if message.text.lower() == 'зарегестрироваться':
-        get_text_messages(message)
+    if message.text.lower() == 'зарегистрироваться':
+        if (database.is_user_exists(message.from_user.id) == False):
+            get_text_messages(message)
+        else:
+            bot.send_message(message.chat.id, 'Вы уже зарегистрированы')
+            main_menu(message)
         k = 0
     elif message.text.lower() == 'удалить аккаунт':
+        try:
+            database.delete_user(message.from_user.id)
+        except:
+            bot.send_message(message.chat.id, 'Произошла какая-то ошибка\nПриносим сови извинения')
         bot.send_message(message.chat.id, 'Надеюсь, мы помогли вам найти и познакомится с новыми людьми!\nВаш аккаунт удален!')
-        database.delete_user(message.from_user.id)
     elif message.text.lower() == 'изменить данные':
         get_text_messages(message)
         k = 1
     elif message.text.lower() == 'смотреть анкеты':
-        partner_anketa = database.get_partner(message.from_user.id)
-        database.read_userdata(message.from_user.id,partner_anketa)
+        get_partner1(message)
+        #partner_anketa = database.get_partner(message.from_user.id)
+        #database.read_userdata(message.from_user.id,partner_anketa)
+    elif message.text.lower() == 'я уже зарегистрирован':
+        if (database.is_user_exists(message.from_user.id) == True):
+            main_menu(message)
+        else:
+            keyboard = telebot.types.ReplyKeyboardMarkup(True)
+            keyboard.row('Зарегистрироваться')
+            bot.send_message(message.chat.id,'Ваш аккаунт не найден\nДавайте зарегистрируемся еще раз', reply_markup=keyboard)
+    elif (message.text.lower() == 'продолжить общение'):
+       database.read_userdata(message.from_user.id,partner_anketa)
+    
+    elif (message.text.lower() =='дальше'):
+        get_partner1(message)
+
+    elif (message.text.lower() == 'стоп'):
+        bot.send_message(message.chat.id, 'Рад был с тобой пообщаться\nЖдем тебя еще')
 
 
 bot.polling(none_stop = True, interval = 0)
