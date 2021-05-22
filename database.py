@@ -144,17 +144,18 @@ def get_partner(user_id):
                 cursor.execute("""
                     SELECT id
                     FROM users
-                    WHERE partner_sex = ? OR partner_sex = "any
+                    WHERE partner_sex = ? OR partner_sex = "any"
                 """, (str(sex),))
             else:
                 cursor.execute("""
                     SELECT id
                     FROM users
-                    WHERE sex = ? AND (partner_sex = ? OR partner_sex = "any)
+                    WHERE sex = ? AND (partner_sex = ? OR partner_sex = "any")
                 """, (str(partner_sex), str(sex)))
 
             partners = cursor.fetchall()
-            partner_id = partners[random.randint(len(partners))]
+
+            partner_id = partners[random.randint(0, len(partners) - 1)][0]
 
             return partner_id
         except Exception as error:
@@ -164,3 +165,5 @@ def get_partner(user_id):
     else:
         raise UserIDError('User with id ' + str(user_id + ' not exists'))
         connection.close
+
+print(get_partner(599415618))
